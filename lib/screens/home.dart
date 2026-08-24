@@ -1,21 +1,43 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:lottie/lottie.dart';
 import 'package:session_4/screens/add_task.dart';
 
+import '../controller/theme_controller.dart';
+import 'done_tasks.dart';
+
 class Home extends StatefulWidget {
-  const Home({super.key});
+  final ThemeController themeController;
+
+  const Home({super.key, required this.themeController});
 
   @override
   State<Home> createState() => _HomeState();
 }
 
 class _HomeState extends State<Home> {
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.check_box),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => DoneTasks()),
+              ).then((value) {
+                setState(() {});
+              });
+            },
+          ),
+          IconButton(onPressed: () {
+             widget.themeController.toggleTheme();
+          }, icon: Icon(CupertinoIcons.moon)),
+        ],
         title: const Text("Taskaty"),
         backgroundColor: Colors.deepPurpleAccent,
         foregroundColor: Colors.white,
@@ -31,7 +53,12 @@ class _HomeState extends State<Home> {
               MaterialPageRoute(builder: (context) => AddTask()),
             ).then((value) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text("Task added successfully")),
+                SnackBar(
+                  content: Text(
+                    "Task added successfully",
+                    style: TextStyle(color: Colors.green),
+                  ),
+                ),
               );
               setState(() {});
             });
@@ -71,13 +98,32 @@ class _HomeState extends State<Home> {
               itemBuilder: (context, index) {
                 return Card(
                   child: ListTile(
-
+                    leading: Checkbox(
+                      value:
+                          Hive.box("Taskaty").getAt(index)["completed"] ??
+                          false,
+                      onChanged: (value) {
+                        Hive.box("Taskaty").putAt(index, {
+                          ...Hive.box("Taskaty").getAt(index),
+                          "completed": value,
+                        });
+                        setState(() {});
+                        if (value == true) {
+                          Hive.box(
+                            "DoneTasks",
+                          ).add(Hive.box("Taskaty").getAt(index));
+                          Hive.box("Taskaty").deleteAt(index);
+                        }
+                      },
+                    ),
                     title: Text(Hive.box("Taskaty").getAt(index)["task"]),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(Hive.box("Taskaty").getAt(index)["description"]),
-                        Text(Hive.box("Taskaty").getAt(index)["date"] ?? "No date"),
+                        Text(
+                          Hive.box("Taskaty").getAt(index)["date"] ?? "No date",
+                        ),
                       ],
                     ),
                     trailing: Row(
@@ -89,7 +135,7 @@ class _HomeState extends State<Home> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => AddTask(index: index,),
+                                builder: (context) => AddTask(index: index),
                               ),
                             ).then((value) {
                               setState(() {});

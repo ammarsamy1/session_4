@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/adapters.dart';
+import 'package:session_4/controller/theme_controller.dart';
 import 'package:session_4/screens/home.dart';
-
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   await Hive.openBox("Taskaty");
+  await Hive.openBox("DoneTasks");
   runApp(const MyApp());
 }
 
@@ -15,11 +16,20 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Home(),
+    ThemeController themeController = ThemeController();
+    return ListenableBuilder(
+      listenable: themeController,
+      builder: (context, child) {
+        return MaterialApp(
+          darkTheme: ThemeData.dark(),
+          theme: ThemeData.light(),
+          themeMode: themeController.isDarkMode
+              ? ThemeMode.dark
+              : ThemeMode.light,
+          debugShowCheckedModeBanner: false,
+          home: Home(themeController: themeController),
+        );
+      },
     );
   }
 }
-
-
